@@ -1,0 +1,57 @@
+screenshot_task:
+  description: >
+    Given a webpage URL: {url}
+
+    You are a web automation expert.
+    Write a **valid Python script using Selenium** that:
+
+    1. Opens the page using headless Chrome (--headless=new)
+    2. Sets window size to 1920x1080
+    3. Waits until the page loads completely
+    4. Detects all <img>, <svg>, <canvas> and similar visual elements
+    5. Scrolls each into view using element.location_once_scrolled_into_view
+    6. Waits 1.5 seconds after each scroll
+    7. Checks if element is visible with element.is_displayed()
+    8. Takes screenshot using driver.get_screenshot_as_file()
+    9. Saves screenshots as screenshot_0.png, screenshot_1.png, ... in screenshots/{url_hash}
+    10. Skips elements that are hidden or empty
+    11. Returns the full list of saved image paths
+
+  expected_output: >
+    Python code as a string that, when executed, saves valid screenshots and returns their paths.
+
+  agent: screenshot_agent
+
+analyze_task:
+  description: >
+    Analyze each screenshot using Gemini and extract:
+      - Title of the graph/image
+      - Visual content summary
+      - Trends (if any)
+      - OCR labels
+
+    The screenshot paths will be passed from the previous task.
+    Write the insights to a file: insights/insights.json
+
+  expected_output: >
+    JSON list of structured insights per image, saved in insights/insights.json.
+
+  agent: visual_analyzer
+
+reporting_task:
+  description: >
+    Load the visual insight data directly from the file insights/insights.json.
+
+    For each image:
+      - Use the 'image' and 'analysis' fields
+      - Create a markdown section:
+          - Title: Image filename
+          - Bullet points summarizing the analysis
+
+    Do NOT ask for the URL. The insights are already generated.
+    Just format the content from insights/insights.json.
+
+  expected_output: >
+    A complete, structured markdown report based on insights/insights.json. Each section should summarize a visual with clear structure and bullet points.
+
+  agent: reporting_analyst
