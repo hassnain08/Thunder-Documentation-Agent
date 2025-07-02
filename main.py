@@ -18,7 +18,7 @@ def fetch_html(url: str) -> str:
         raise RuntimeError(f"❌ Failed to fetch HTML from URL: {url} | Reason: {e}")
 
 def run():
-    url = "https://ourworldindata.org/artificial-intelligence#all-charts"
+    url = "https://dev.thunder.infralectric.com/login"
 
     # Auto-generate a unique folder name from the URL
     url_hash = hashlib.sha256(url.encode()).hexdigest()[:10]
@@ -34,11 +34,13 @@ def run():
         "url_hash": url_hash
 
     }
-
+    print('Running Crew')
     try:
         Thunderautomation().crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"❌ Crew run failed: {e}")
+    print('Ending Crew')
+
 
 if __name__ == "__main__":
     run()

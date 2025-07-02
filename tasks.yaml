@@ -1,26 +1,66 @@
 screenshot_task:
   description: >
-    Given a webpage URL: {url}
+    Given a secure Thunder Energy dashboard URL: {url}
 
-    You are a web automation expert.
-    Write a **valid Python script using Selenium** that:
+    Write a **clean, modular Python script using Selenium** that performs the following operations with robust error handling:
 
-    1. Opens the page using headless Chrome (--headless=new)
-    2. Sets window size to 1920x1080
-    3. Waits until the page loads completely
-    4. Detects all <img>, <svg>, <canvas> and similar visual elements
-    5. Scrolls each into view using element.location_once_scrolled_into_view
-    6. Waits 1.5 seconds after each scroll
-    7. Checks if element is visible with element.is_displayed()
-    8. Takes screenshot using driver.get_screenshot_as_file()
-    9. Saves screenshots as screenshot_0.png, screenshot_1.png, ... in screenshots/{url_hash}
-    10. Skips elements that are hidden or empty
-    11. Returns the full list of saved image paths
+    1. **Login Automation**:
+       - Open Chrome using:
+         - `--window-size=1920x1080`
+         - `--disable-gpu`, `--no-sandbox`
+         - (Commented out: `--headless=new`)
+       - Visit the login page: `{url}`
+       - Wait for and fill:
+         - Email input: `//input[@type='email']`
+         - Password input: `//input[@type='password']`
+         input:
+         email: hassnain.abbas@thunderenergy.ai
+         password: Thunder@123
+       - Click login: `//button[contains(., 'Login')]`
+
+    2. **Navigation**:
+       - Wait for login completion (`time.sleep(5)`)
+       - Click the sidebar link for **"Sites"**:
+         - XPath: `//a[.//strong[text()='Sites']]`
+       - Wait for content to load, using:
+         - `//h1[contains(text(), 'Snapshot')]` **OR**
+         - `//div[contains(text(), 'Power Flow')]`
+       - Wait an additional 15 seconds to ensure rendering of charts.
+
+    3. **Screenshot Logic (Modularized)**:
+       - Implement a function `scroll_and_capture(driver, folder_path)`:
+         - Scrolls through the full height of the page
+         - Takes a screenshot at each viewport
+         - Saves images as `snapshot_1.png`, `snapshot_2.png`, etc.
+         - Stops scrolling once the bottom of the page is reached (no infinite loop)
+         - Returns the list of saved screenshot paths
+
+    4. **Save Outputs in a Unique Folder**:
+       - Use `hashlib.md5(url.encode()).hexdigest()[:10]` to generate a folder name
+       - Save screenshots inside: `screenshots/<url_hash>/`
+
+    5. **Error Handling**:
+       - If anything fails:
+         - Save a screenshot as `error_debug.png` inside the same folder
+         - Save current page HTML as `page_dump.html` (optional)
+         - Return an empty list
+
+    6. **Execution Format**:
+       - All logic should be wrapped inside a callable main function like `capture_scrollable_snapshot_view()`
+       - Use a `__main__` block to execute the script
+       - Print the list of all captured screenshot file paths
+
+    IMPORTANT: once task is done, kill the agents process.
 
   expected_output: >
-    Python code as a string that, when executed, saves valid screenshots and returns their paths.
+    {
+    "status": "success",
+    "paths": ["screenshot_1.png", "screenshot_2.png", "..."]
+    }
 
   agent: screenshot_agent
+
+
 
 analyze_task:
   description: >

@@ -16,8 +16,8 @@ import subprocess
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))  # ✅ Don't duplicate configure
-gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY")) 
+gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Tool 1: Selenium Screenshot
 class ScreenshotToolInput(BaseModel):
@@ -37,11 +37,15 @@ class SeleniumScriptExecutor(BaseTool):
 
         with open(script_path, "w") as f:
             f.write(script_code)
-        
-        result = subprocess.run(["python", script_path], capture_output=True, text=True)
+        print("Running SCRIPT>>>>>>>>>")
+        try:
+            result = subprocess.run(["python", script_path], capture_output=True, text=True, timeout=120)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("⏱️ Script took too long and was killed after 120 seconds.")
+        print("ENDING SCRIPT>>>>>>>>>")
 
         if result.returncode != 0:
-            raise RuntimeError(f"Script failed:\n{result.stderr}")
+            raise RuntimeError(f"❌ Script failed:\n{result.stderr}")
 
         image_paths = [
             os.path.join(folder, f)
@@ -52,7 +56,12 @@ class SeleniumScriptExecutor(BaseTool):
         if not image_paths:
             raise FileNotFoundError("❌ No screenshots were saved.")
 
-        return image_paths
+        return {
+        "status": "success",
+        "paths": image_paths  # image_paths must be a list of valid PNG paths
+        }
+
+
 
 
 
@@ -81,15 +90,15 @@ class VisualAnalyzer(BaseTool):
                 with Image.open(path) as img:
                     response = gemini_model.generate_content([
                         img,
-                        """You're analyzing a cropped screenshot of a chart from the Our World in Data AI dataset page.
+                        """You’re analyzing a cropped screenshot of a chart from the Thunder Energy dashboard.
                         Extract:
-                        - Title of the chart (from any text inside the image)
-                        - Type of chart (e.g. bar, line, scatter)
-                        - Summary of trends shown (e.g. upward, flat, cyclical)
-                        - Any axis labels or numbers shown
+                        - Title (from visible text in the chart)
+                        - Type of graph
+                        - Data trend (upward, flat, seasonal, etc.)
+                        - OCR any key metrics or labels
+                        If not a chart, skip."""
+                        ])
 
-                        If the image does not contain a chart, skip it."""
-                    ])
 
                     if not response or not response.text or "not a chart" in response.text.lower():
                         print(f"[Skipped]: Not a chart -> {path}")

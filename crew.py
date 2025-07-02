@@ -32,23 +32,27 @@ class Thunderautomation():
             verbose=True
         )
 
+
     @task
     def screenshot_task(self) -> Task:
-        return Task(
-        config=self.tasks_config["screenshot_task"],
-        input=lambda ctx: {
-            "script_code": ctx.get("screenshot_task"),
-            "folder": f"screenshots/{ctx.get('url_hash')}"
-        }
+            print("Running Screenshot Task")
+            return Task(
+                config=self.tasks_config["screenshot_task"],
+                input=lambda ctx: {
+                    "script_code": ctx["inputs"]["screenshot_task"], 
+                    "folder": f"screenshots/{ctx.get('url_hash')}"
+                },
+                output_key="screenshot_paths"
     )
+
 
     @task
     def analyze_task(self) -> Task:
         return Task(
             config=self.tasks_config["analyze_task"],
             input=lambda ctx: {
-                "screenshot_paths": ctx.get("screenshot_task")
-            }
+            "screenshot_paths": ctx.get("screenshot_paths", {}).get("paths", [])
+}
         )
 
     @task
